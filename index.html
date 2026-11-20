@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DIRIM — Karakter Kağıdı &amp; GM Paneli</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-page: #121214;
+      --bg-sheet: #f8f6f0;
+      --bg-panel: #ffffff;
+      --ink-primary: #18181b;
+      --ink-muted: #52525b;
+      --border-strong: #18181b;
+      --border-subtle: #d4d4d8;
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 48px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-page);
+      color: var(--ink-primary);
+      line-height: 1.4;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* GİRİŞ EKRANI */
+    .auth-wrapper {
+      max-width: 420px;
+      margin: 48px auto;
+      background: var(--bg-sheet);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .auth-header {
+      text-align: center;
+      border-bottom: 2px solid var(--border-strong);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+
+    .auth-header h1 {
+      margin: 0;
+      font-size: 2.1rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+    }
+
+    .auth-header p {
+      margin: 4px 0 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--ink-muted);
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .auth-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .auth-mode-badge {
+      margin-top: 14px;
+      font-size: 0.76rem;
+      color: var(--ink-muted);
+      text-align: center;
+    }
+
+    /* ÜST ARAÇ ÇUBUĞU */
+    .app-toolbar {
+      max-width: 980px;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      color: #e4e4e7;
+    }
+
+    .app-toolbar__left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .app-toolbar__title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .sync-pill {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #d4d4d8;
+    }
+
+    .sync-pill.live {
+      border-color: #16a34a;
+      color: #86efac;
+    }
+
+    .sync-pill.saving {
+      border-color: #eab308;
+      color: #fde047;
+    }
+
+    .app-toolbar__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    select.gm-select {
+      background: #27272a;
+      color: #f4f4f5;
+      border: 1px solid #52525b;
+      border-radius: var(--radius);
+      padding: 7px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button {
+      background: #27272a;
+      color: #f4f4f5;
+      border: 1px solid #3f3f46;
+      border-radius: var(--radius);
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover {
+      background: #3f3f46;
+      border-color: #52525b;
+    }
+
+    button.primary {
+      background: #18181b;
+      color: #ffffff;
+      border-color: #18181b;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    button.primary:hover {
+      background: #27272a;
+    }
+
+    button.danger:hover {
+      background: #7f1d1d;
+      border-color: #991b1b;
+    }
+
+    /* GM HIZLI KART LİSTESİ */
+    .gm-roster-bar {
+      max-width: 980px;
+      margin: 0 auto 16px;
+      background: #1c1c21;
+      border: 1px solid #32323a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .gm-roster-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+      margin-right: 4px;
+    }
+
+    .gm-roster-btn {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      background: #27272a;
+    }
+
+    .gm-roster-btn.active {
+      background: #f8f6f0;
+      color: #18181b;
+      border-color: #f8f6f0;
+      font-weight: 700;
+    }
+
+    /* KARAKTER KAĞIDI */
+    .sheet {
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--bg-sheet);
+      color: var(--ink-primary);
+      border-radius: 10px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .sheet-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: start;
+      border-bottom: 2px solid var(--border-strong);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand-block h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand-block .sub-tag {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .meta-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .field-box {
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+    }
+
+    .field-box label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+    }
+
+    .field-box input[type="text"],
+    .field-box input[type="password"],
+    .field-box textarea {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--ink-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      outline: none;
+    }
+
+    .field-box textarea {
+      resize: vertical;
+      min-height: 76px;
+    }
+
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.35fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1.5px solid var(--border-strong);
+      padding-bottom: 6px;
+    }
+
+    .skills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .skill-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      border-radius: 4px;
+    }
+
+    .skill-row:last-child {
+      border-bottom: none;
+    }
+
+    .skill-row:hover {
+      background: #fafafa;
+    }
+
+    .skill-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .skill-name input.inline-skill-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px dashed #a1a1aa;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+      padding: 1px 2px;
+      outline: none;
+    }
+
+    .skill-boxes {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .write-box {
+      width: 34px;
+      height: 24px;
+      border: 1.75px solid var(--border-strong);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink-primary);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 0 3px;
+      outline: none;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .write-box:focus {
+      border-color: #09090b;
+      box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.15);
+    }
+
+    .btn-remove-skill {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f4f4f5;
+      color: #52525b;
+      border: 1px solid #d4d4d8;
+      border-radius: 3px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .btn-remove-skill:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+
+    .extra-skill-add {
+      margin-top: 8px;
+      width: 100%;
+      background: #f4f4f5;
+      color: var(--ink-primary);
+      border: 1px dashed #71717a;
+    }
+
+    .extra-skill-add:hover {
+      background: #e4e4e7;
+    }
+
+    .plugin-slot {
+      border: 1.5px dashed #a1a1aa;
+      background: #fafafa;
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+    }
+
+    @media (max-width: 820px) {
+      .sheet-header {
+        grid-template-columns: 1fr;
+      }
+      .meta-fields {
+        grid-template-columns: 1fr;
+      }
+      .sheet-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .auth-wrapper,
+      .app-toolbar,
+      .gm-roster-bar,
+      .extra-skill-add,
+      .btn-remove-skill,
+      .plugin-slot {
+        display: none !important;
+      }
+      .sheet {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 12px;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ANASAYFA: KULLANICI ADI & ŞİFRE GİRİŞİ -->
+  <section id="auth-screen" class="auth-wrapper" aria-label="Giriş Ekranı">
+    <header class="auth-header">
+      <h1>DIRIM</h1>
+      <p>ANOMALİ • KARAKTER PORTALI</p>
+    </header>
+
+    <form id="login-form" class="auth-form">
+      <div class="field-box">
+        <label for="login-username">KULLANICI ADI</label>
+        <input
+          type="text"
+          id="login-username"
+          autocomplete="username"
+          placeholder="ör. oyuncu1 veya gm"
+          required
+        />
+      </div>
+
+      <div class="field-box">
+        <label for="login-password">ŞİFRE</label>
+        <input
+          type="password"
+          id="login-password"
+          autocomplete="current-password"
+          placeholder="Şifreni gir..."
+          required
+        />
+      </div>
+
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <button type="submit" class="primary">Giriş Yap</button>
+    </form>
+
+    <div id="auth-mode-info" class="auth-mode-badge"></div>
+  </section>
+
+  <!-- UYGULAMA EKRANI -->
+  <div id="app-screen" class="hidden">
+    <div class="app-toolbar">
+      <div class="app-toolbar__left">
+        <div class="app-toolbar__title" id="session-info">DIRIM — Karakter Kağıdı</div>
+        <span id="sync-status" class="sync-pill">Yerel Mod</span>
+      </div>
+
+      <div class="app-toolbar__actions">
+        <select id="gm-character-select" class="gm-select hidden" aria-label="Oyuncu karakteri seç">
+          <option value="">Karakter seç...</option>
+        </select>
+        <button type="button" id="btn-export-json">JSON İndir</button>
+        <button type="button" id="btn-import-json">JSON Yükle</button>
+        <input type="file" id="json-file-input" accept="application/json" hidden />
+        <button type="button" id="btn-print">Yazdır / PDF</button>
+        <button type="button" class="danger" id="btn-reset">Temizle</button>
+        <button type="button" id="btn-logout">Çıkış Yap</button>
+      </div>
+    </div>
+
+    <!-- GM İÇİN HIZLI OYUNCU GEÇİŞ ÇUBUĞU -->
+    <div id="gm-roster-bar" class="gm-roster-bar hidden" aria-label="GM Oyuncu Listesi">
+      <span class="gm-roster-label">Oyuncular:</span>
+      <div id="gm-roster-buttons"></div>
+    </div>
+
+    <main class="sheet" id="character-sheet" data-app-version="0.4.0">
+      <header class="sheet-header">
+        <div class="brand-block">
+          <h1>DIRIM</h1>
+          <span class="sub-tag">ANOMALİ</span>
+        </div>
+
+        <div class="meta-fields">
+          <div class="field-box">
+            <label for="char-name">KARAKTER ADI</label>
+            <input type="text" id="char-name" data-save="char-name" placeholder="Karakter adını gir..." />
+          </div>
+          <div class="field-box">
+            <label for="player-name">OYUNCU ADI</label>
+            <input type="text" id="player-name" data-save="player-name" placeholder="Oyuncu adını gir..." />
+          </div>
+        </div>
+      </header>
+
+      <div class="sheet-grid">
+        <!-- SOL SÜTUN: YETENEKLER -->
+        <section class="column" aria-label="Yetenekler">
+          <div class="panel" id="panel-skills">
+            <h2 class="panel-title">YETENEKLER</h2>
+            <div class="skills-list" id="skills-container"></div>
+          </div>
+
+          <div class="panel" id="panel-other-skills">
+            <h2 class="panel-title">DIĞER YETENEKLER</h2>
+            <div class="skills-list" id="other-skills-container"></div>
+            <button type="button" class="extra-skill-add" id="btn-add-other-skill">+ Yetenek Satırı Ekle</button>
+          </div>
+        </section>
+
+        <!-- SAĞ SÜTUN: KİMLİK, ANOMALİ, BELA, DİĞER YÖNLER -->
+        <section class="column" aria-label="Karakter Detayları">
+          <div class="panel" id="panel-core-identity">
+            <h2 class="panel-title">ANA KIMLIK</h2>
+            <div class="field-box">
+              <label for="ana-kimlik">ANA KIMLIK</label>
+              <textarea id="ana-kimlik" data-save="ana-kimlik" placeholder="Ana kimlik detayları..."></textarea>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-anomaly">
+            <h2 class="panel-title">ANOMALİ</h2>
+            <div class="field-box">
+              <label for="anomali">ANOMALİ</label>
+              <textarea id="anomali" data-save="anomali" placeholder="Anomali özellikleri ve notları..."></textarea>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-trouble">
+            <h2 class="panel-title">BELA</h2>
+            <div class="field-box">
+              <label for="bela">BELA</label>
+              <textarea id="bela" data-save="bela" placeholder="Bela / dezavantaj / baskı unsurları..."></textarea>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-other-aspects">
+            <h2 class="panel-title">DİĞER YÖNLER</h2>
+            <div class="field-box">
+              <label for="diger-yonler">DİĞER YÖNLER</label>
+              <textarea id="diger-yonler" data-save="diger-yonler" placeholder="Diğer yönler, ekipman veya ek notlar..."></textarea>
+            </div>
+          </div>
+
+          <div id="custom-modules-slot" class="plugin-slot" data-slot="future-modules">
+            Modül Alanı: İleride ekleyeceğin yeni bölümler buraya veya ayrı panellere bağlanabilir.
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      // 1) SUPABASE AYARLARI (Ortak canlı veritabanı ve anlık senkronizasyon için doldur)
+      const SUPABASE_CONFIG = {
+        url: "", // örn: "https://xxxxx.supabase.co"
+        anonKey: "", // örn: "eyJhbGciOi..."
+        table: "dirim_characters"
+      };
+
+      // 2) KULLANICI LİSTESİ (10 Oyuncu + 1 GM) — İstediğin gibi düzenleyebilirsin
+      const USERS = [
+        { username: "oyuncu1", password: "123", role: "player", displayName: "Oyuncu 1" },
+        { username: "oyuncu2", password: "123", role: "player", displayName: "Oyuncu 2" },
+        { username: "oyuncu3", password: "123", role: "player", displayName: "Oyuncu 3" },
+        { username: "oyuncu4", password: "123", role: "player", displayName: "Oyuncu 4" },
+        { username: "oyuncu5", password: "123", role: "player", displayName: "Oyuncu 5" },
+        { username: "oyuncu6", password: "123", role: "player", displayName: "Oyuncu 6" },
+        { username: "oyuncu7", password: "123", role: "player", displayName: "Oyuncu 7" },
+        { username: "oyuncu8", password: "123", role: "player", displayName: "Oyuncu 8" },
+        { username: "oyuncu9", password: "123", role: "player", displayName: "Oyuncu 9" },
+        { username: "oyuncu10", password: "123", role: "player", displayName: "Oyuncu 10" },
+        { username: "gm", password: "gm123", role: "gm", displayName: "Game Master" }
+      ];
+
+      const PLAYER_USERS = USERS.filter((u) => u.role === "player");
+      const LOCAL_PREFIX = "dirim_sheet_v4_";
+      const SESSION_KEY = "dirim_active_session_v1";
+
+      const DEFAULT_SKILLS = [
+        { id: "adaptasyon", label: "Adaptasyon", boxes: 1 },
+        { id: "dayaniklilik", label: "Dayanıklılık", boxes: 1 },
+        { id: "icgudu", label: "İçgüdü", boxes: 1 },
+        { id: "kavga_1", label: "Kavga", boxes: 1 },
+        { id: "arastirma", label: "Araştırma", boxes: 1 },
+        { id: "el_becerisi", label: "El Becerisi", boxes: 1 },
+        { id: "ikna", label: "İkna", boxes: 1 },
+        { id: "nisancilik", label: "Nişancılık", boxes: 1 },
+        { id: "atletik", label: "Atletik", boxes: 1 },
+        { id: "farkindalik", label: "Farkındalık", boxes: 1 },
+        { id: "nirade", label: "Nirade", boxes: 1 },
+        { id: "performans", label: "Performans", boxes: 1 },
+        { id: "aticilik", label: "Atıcılık", boxes: 1 },
+        { id: "egitim", label: "Eğitim", boxes: 1 },
+        { id: "kandirma", label: "Kandırma", boxes: 1 },
+        { id: "suruculuk", label: "Sürücülük", boxes: 1 },
+        { id: "bilim", label: "Bilim", boxes: 1 },
+        { id: "gizlilik", label: "Gizlilik", boxes: 1 },
+        { id: "tarih", label: "Tarih", boxes: 1 },
+        { id: "teknoloji", label: "Teknoloji", boxes: 1 }
+      ];
+
+      const DEFAULT_OTHER_SKILLS = [
+        { id: "diger_1", label: "", value: "" },
+        { id: "diger_2", label: "", value: "" }
+      ];
+
+      const hasCloud = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase);
+      const supabaseClient = hasCloud
+        ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
+        : null;
+
+      let currentUser = null;
+      let activeCharacterOwner = null;
+      let realtimeChannel = null;
+      let saveDebounceTimer = null;
+      let isApplyingRemoteState = false;
+
+      // DOM referansları
+      const authScreen = document.getElementById("auth-screen");
+      const appScreen = document.getElementById("app-screen");
+      const loginForm = document.getElementById("login-form");
+      const authError = document.getElementById("auth-error");
+      const authModeInfo = document.getElementById("auth-mode-info");
+      const sessionInfo = document.getElementById("session-info");
+      const syncStatus = document.getElementById("sync-status");
+      const gmSelect = document.getElementById("gm-character-select");
+      const gmRosterBar = document.getElementById("gm-roster-bar");
+      const gmRosterButtons = document.getElementById("gm-roster-buttons");
+      const skillsContainer = document.getElementById("skills-container");
+      const otherSkillsContainer = document.getElementById("other-skills-container");
+      const btnAddOtherSkill = document.getElementById("btn-add-other-skill");
+
+      authModeInfo.textContent = hasCloud
+        ? "Mod: Ortak Veritabanı + Canlı Senkronizasyon Aktif"
+        : "Mod: Yerel Tarayıcı (Supabase bilgileri eklendiğinde canlı ortak veritabanına geçer)";
+
+      function setSyncStatus(text, type = "") {
+        syncStatus.textContent = text;
+        syncStatus.className = `sync-pill ${type}`.trim();
+      }
+
+      function createWritableBoxes(prefixId, count, valuesArr = []) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "skill-boxes";
+
+        for (let i = 0; i < count; i++) {
+          const boxId = `${prefixId}_box_${i}`;
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "write-box";
+          input.id = boxId;
+          input.setAttribute("aria-label", `${prefixId} kutu ${i + 1}`);
+          input.value = valuesArr[i] ?? "";
+          input.addEventListener("input", scheduleSave);
+          wrapper.appendChild(input);
+        }
+
+        return wrapper;
+      }
+
+      function renderFixedSkills(savedValues = {}) {
+        skillsContainer.innerHTML = "";
+        DEFAULT_SKILLS.forEach((skill) => {
+          const row = document.createElement("div");
+          row.className = "skill-row";
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "skill-name";
+          nameSpan.textContent = skill.label;
+
+          const boxes = createWritableBoxes(skill.id, skill.boxes, savedValues[skill.id] || []);
+
+          row.appendChild(nameSpan);
+          row.appendChild(boxes);
+          skillsContainer.appendChild(row);
+        });
+      }
+
+      function renderOtherSkills(items = DEFAULT_OTHER_SKILLS) {
+        otherSkillsContainer.innerHTML = "";
+        items.forEach((item, idx) => {
+          const id = item.id || `diger_${idx + 1}`;
+          const singleValue =
+            typeof item.value === "string"
+              ? item.value
+              : Array.isArray(item.values)
+              ? item.values[0] ?? ""
+              : "";
+
+          const row = document.createElement("div");
+          row.className = "skill-row";
+          row.dataset.otherSkillRow = id;
+
+          const nameWrap = document.createElement("div");
+          nameWrap.className = "skill-name";
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "inline-skill-input";
+          input.placeholder = "Diğer yetenek adı...";
+          input.value = item.label || "";
+          input.dataset.otherSkillLabel = id;
+          input.addEventListener("input", scheduleSave);
+
+          nameWrap.appendChild(input);
+
+          const actionsWrap = createWritableBoxes(id, 1, [singleValue]);
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "btn-remove-skill";
+          removeBtn.title = "Satırı sil";
+          removeBtn.setAttribute("aria-label", "Yetenek satırını sil");
+          removeBtn.textContent = "×";
+          removeBtn.addEventListener("click", () => {
+            row.remove();
+            scheduleSave();
+          });
+
+          actionsWrap.appendChild(removeBtn);
+          row.appendChild(nameWrap);
+          row.appendChild(actionsWrap);
+          otherSkillsContainer.appendChild(row);
+        });
+      }
+
+      function collectState() {
+        const fields = {};
+        document.querySelectorAll("[data-save]").forEach((el) => {
+          fields[el.dataset.save] = el.value;
+        });
+
+        const skillValues = {};
+        DEFAULT_SKILLS.forEach((skill) => {
+          const arr = [];
+          for (let i = 0; i < skill.boxes; i++) {
+            const box = document.getElementById(`${skill.id}_box_${i}`);
+            arr.push(box ? box.value : "");
+          }
+          skillValues[skill.id] = arr;
+        });
+
+        const otherSkills = [];
+        otherSkillsContainer.querySelectorAll("[data-other-skill-row]").forEach((row) => {
+          const id = row.dataset.otherSkillRow;
+          const labelInput = row.querySelector(`[data-other-skill-label="${id}"]`);
+          const box = row.querySelector(".write-box");
+          otherSkills.push({
+            id,
+            label: labelInput ? labelInput.value : "",
+            value: box ? box.value : ""
+          });
+        });
+
+        return {
+          version: "0.4.0",
+          owner: activeCharacterOwner,
+          updatedBy: currentUser?.username || "unknown",
+          updatedAt: new Date().toISOString(),
+          fields,
+          skillValues,
+          otherSkills
+        };
+      }
+
+      function applyState(state, ownerFallback = "") {
+        isApplyingRemoteState = true;
+        try {
+          const emptyFields = {
+            "char-name": "",
+            "player-name": ownerFallback,
+            "ana-kimlik": "",
+            "anomali": "",
+            "bela": "",
+            "diger-yonler": ""
+          };
+
+          const sourceFields = state && state.fields ? state.fields : emptyFields;
+
+          document.querySelectorAll("[data-save]").forEach((el) => {
+            const key = el.dataset.save;
+            if (Object.prototype.hasOwnProperty.call(sourceFields, key)) {
+              el.value = sourceFields[key] ?? "";
+            } else {
+              el.value = emptyFields[key] ?? "";
+            }
+          });
+
+          renderFixedSkills(state && state.skillValues ? state.skillValues : {});
+          renderOtherSkills(
+            state && Array.isArray(state.otherSkills) ? state.otherSkills : DEFAULT_OTHER_SKILLS
+          );
+        } finally {
+          isApplyingRemoteState = false;
+        }
+      }
+
+      function getLocalKey(owner) {
+        return `${LOCAL_PREFIX}${owner}`;
+      }
+
+      function saveLocal(owner, state) {
+        localStorage.setItem(getLocalKey(owner), JSON.stringify(state));
+      }
+
+      function loadLocal(owner) {
+        const raw = localStorage.getItem(getLocalKey(owner));
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      }
+
+      async function saveToCloud(owner, state) {
+        if (!supabaseClient || !owner) return;
+        setSyncStatus("Kaydediliyor...", "saving");
+        const { error } = await supabaseClient
+          .from(SUPABASE_CONFIG.table)
+          .upsert(
+            {
+              owner_username: owner,
+              data: state,
+              updated_by: currentUser?.username || owner,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: "owner_username" }
+          );
+
+        if (error) {
+          console.error("Supabase kayıt hatası:", error);
+          setSyncStatus("Kayıt Hatası");
+        } else {
+          setSyncStatus("Canlı Senkron", "live");
+        }
+      }
+
+      function scheduleSave() {
+        if (isApplyingRemoteState || !activeCharacterOwner) return;
+        const state = collectState();
+        saveLocal(activeCharacterOwner, state);
+
+        if (!hasCloud) {
+          setSyncStatus("Yerel Kaydedildi");
+          return;
+        }
+
+        setSyncStatus("Yazılıyor...", "saving");
+        clearTimeout(saveDebounceTimer);
+        saveDebounceTimer = setTimeout(() => {
+          saveToCloud(activeCharacterOwner, state);
+        }, 300);
+      }
+
+      function subscribeRealtime() {
+        if (!supabaseClient) return;
+        if (realtimeChannel) {
+          supabaseClient.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+
+        realtimeChannel = supabaseClient
+          .channel("dirim_characters_live")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: SUPABASE_CONFIG.table
+            },
+            (payload) => {
+              const row = payload.new;
+              if (!row || !row.owner_username) return;
+              saveLocal(row.owner_username, row.data);
+
+              // GM aktif olarak bu oyuncunun kağıdındaysa veya oyuncu kendi kağıdındaysa anında güncelle
+              if (
+                row.owner_username === activeCharacterOwner &&
+                row.updated_by !== currentUser?.username
+              ) {
+                applyState(row.data, row.owner_username);
+                setSyncStatus("Canlı Güncellendi", "live");
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              setSyncStatus("Canlı Senkron", "live");
+            }
+          });
+      }
+
+      async function loadCharacterSheet(owner) {
+        activeCharacterOwner = owner;
+        const ownerUser = PLAYER_USERS.find((u) => u.username === owner);
+        const ownerLabel = ownerUser ? ownerUser.displayName : owner;
+
+        if (currentUser.role === "gm") {
+          sessionInfo.textContent = `GM: ${currentUser.displayName} → ${ownerLabel} (${owner}) Kağıdı`;
+          gmSelect.value = owner;
+          updateGmRosterActive(owner);
+        } else {
+          sessionInfo.textContent = `${currentUser.displayName} (${currentUser.username}) — Karakter Kağıdı`;
+        }
+
+        const localData = loadLocal(owner);
+        applyState(localData, ownerLabel);
+
+        if (hasCloud) {
+          setSyncStatus("Yükleniyor...", "saving");
+          const { data, error } = await supabaseClient
+            .from(SUPABASE_CONFIG.table)
+            .select("data")
+            .eq("owner_username", owner)
+            .maybeSingle();
+
+          if (error) {
+            console.error("Supabase okuma hatası:", error);
+            setSyncStatus("Çevrimdışı / Yerel");
+          } else if (data && data.data) {
+            saveLocal(owner, data.data);
+            applyState(data.data, ownerLabel);
+            setSyncStatus("Canlı Senkron", "live");
+          } else {
+            // Veritabanında henüz kayıt yoksa mevcut boş/yerel taslağı oluştur
+            await saveToCloud(owner, collectState());
+          }
+        } else {
+          setSyncStatus("Yerel Mod");
+        }
+      }
+
+      function updateGmRosterActive(selectedOwner) {
+        gmRosterButtons.querySelectorAll("button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.owner === selectedOwner);
+        });
+      }
+
+      function buildGmControls() {
+        gmSelect.innerHTML = "";
+        gmRosterButtons.innerHTML = "";
+
+        PLAYER_USERS.forEach((player) => {
+          const opt = document.createElement("option");
+          opt.value = player.username;
+          opt.textContent = `${player.displayName} (${player.username})`;
+          gmSelect.appendChild(opt);
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "gm-roster-btn";
+          btn.dataset.owner = player.username;
+          btn.textContent = player.displayName;
+          btn.addEventListener("click", () => {
+            loadCharacterSheet(player.username);
+          });
+          gmRosterButtons.appendChild(btn);
+        });
+      }
+
+      async function enterSession(user) {
+        currentUser = user;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username }));
+        authScreen.classList.add("hidden");
+        appScreen.classList.remove("hidden");
+
+        if (user.role === "gm") {
+          buildGmControls();
+          gmSelect.classList.remove("hidden");
+          gmRosterBar.classList.remove("hidden");
+          subscribeRealtime();
+          await loadCharacterSheet(PLAYER_USERS[0].username);
+        } else {
+          gmSelect.classList.add("hidden");
+          gmRosterBar.classList.add("hidden");
+          subscribeRealtime();
+          await loadCharacterSheet(user.username);
+        }
+      }
+
+      function logout() {
+        currentUser = null;
+        activeCharacterOwner = null;
+        sessionStorage.removeItem(SESSION_KEY);
+        if (realtimeChannel && supabaseClient) {
+          supabaseClient.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+        appScreen.classList.add("hidden");
+        authScreen.classList.remove("hidden");
+        loginForm.reset();
+        authError.classList.add("hidden");
+      }
+
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = document.getElementById("login-username").value.trim().toLowerCase();
+        const password = document.getElementById("login-password").value;
+
+        const found = USERS.find(
+          (u) => u.username.toLowerCase() === username && u.password === password
+        );
+
+        if (!found) {
+          authError.textContent = "Kullanıcı adı veya şifre hatalı.";
+          authError.classList.remove("hidden");
+          return;
+        }
+
+        authError.classList.add("hidden");
+        await enterSession(found);
+      });
+
+      gmSelect.addEventListener("change", (e) => {
+        if (e.target.value) {
+          loadCharacterSheet(e.target.value);
+        }
+      });
+
+      document.getElementById("btn-logout").addEventListener("click", logout);
+
+      document.querySelectorAll("[data-save]").forEach((el) => {
+        el.addEventListener("input", scheduleSave);
+      });
+
+      btnAddOtherSkill.addEventListener("click", () => {
+        const current = collectState().otherSkills;
+        const nextIndex = current.length + 1;
+        current.push({
+          id: `diger_${nextIndex}_${Date.now()}`,
+          label: "",
+          value: ""
+        });
+        renderOtherSkills(current);
+        scheduleSave();
+      });
+
+      document.getElementById("btn-print").addEventListener("click", () => {
+        window.print();
+      });
+
+      document.getElementById("btn-export-json").addEventListener("click", () => {
+        const dataStr = JSON.stringify(collectState(), null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const baseName =
+          (document.getElementById("char-name").value || activeCharacterOwner || "dirim")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+        a.href = url;
+        a.download = `${baseName}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      const fileInput = document.getElementById("json-file-input");
+      document.getElementById("btn-import-json").addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result));
+            applyState(parsed, activeCharacterOwner);
+            scheduleSave();
+          } catch {
+            alert("Geçersiz JSON dosyası.");
+          }
+        };
+        reader.readAsText(file);
+        fileInput.value = "";
+      });
+
+      document.getElementById("btn-reset").addEventListener("click", () => {
+        if (!confirm("Bu karakter kağıdındaki veriler temizlensin mi?")) return;
+        const ownerUser = PLAYER_USERS.find((u) => u.username === activeCharacterOwner);
+        applyState(null, ownerUser ? ownerUser.displayName : activeCharacterOwner);
+        scheduleSave();
+      });
+
+      // Sayfa yenilendiğinde oturumu koru
+      const savedSessionRaw = sessionStorage.getItem(SESSION_KEY);
+      if (savedSessionRaw) {
+        try {
+          const parsedSession = JSON.parse(savedSessionRaw);
+          const match = USERS.find((u) => u.username === parsedSession.username);
+          if (match) {
+            enterSession(match);
+          }
+        } catch {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      }
+
+      window.DirimSheet = {
+        getState: collectState,
+        setState: (newState) => {
+          applyState(newState, activeCharacterOwner);
+          scheduleSave();
+        },
+        registerModule(title, elementOrHtml) {
+          const slot = document.getElementById("custom-modules-slot");
+          const panel = document.createElement("div");
+          panel.className = "panel";
+
+          const h2 = document.createElement("h2");
+          h2.className = "panel-title";
+          h2.textContent = title;
+          panel.appendChild(h2);
+
+          if (typeof elementOrHtml === "string") {
+            const body = document.createElement("div");
+            body.innerHTML = elementOrHtml;
+            panel.appendChild(body);
+          } else if (elementOrHtml instanceof HTMLElement) {
+            panel.appendChild(elementOrHtml);
+          }
+
+          slot.parentNode.insertBefore(panel, slot);
+          return panel;
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
