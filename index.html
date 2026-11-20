@@ -2,19 +2,26 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DIRIM" />
+  <meta name="theme-color" content="#161513" />
+  <link rel="apple-touch-icon" href="./header-banner.png" />
   <title>DIRIM — Karakter Kağıdı &amp; GM Paneli</title>
   <style>
     :root {
       --bg-page: #161513;
       --bg-sheet: #254552;
       --bg-panel: #e3d6b4;
-      --bg-well: #efe8d6;
+      --bg-well: #d4c49c;
+      --bg-input: #faf5e8;
       --ink-primary: #1b1a18;
-      --ink-muted: #5c574f;
+      --ink-muted: #4a453c;
+      --ink-on-sheet: #f6f1e4;
       --border-strong: #1b1a18;
-      --border-subtle: #cfc6b2;
-      --accent-active: #e7eedc;
+      --border-subtle: #b8a67d;
+      --accent-active: #dce8cb;
       --accent-active-border: #2f5233;
       --radius: 4px;
       --rail-width: 338px;
@@ -24,9 +31,18 @@
       box-sizing: border-box;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
       margin: 0;
-      padding: 24px 16px 48px;
+      padding:
+        calc(20px + env(safe-area-inset-top))
+        calc(14px + env(safe-area-inset-right))
+        calc(44px + env(safe-area-inset-bottom))
+        calc(14px + env(safe-area-inset-left));
+      min-height: 100dvh;
       font-family: Georgia, "Times New Roman", serif;
       background-color: var(--bg-page);
       color: var(--ink-primary);
@@ -56,7 +72,7 @@
         position: fixed;
         top: 0;
         width: var(--rail-width);
-        height: 100vh;
+        height: 100dvh;
         background-image: url("./bg-pattern.png");
         background-repeat: repeat-y;
         background-position: top center;
@@ -79,11 +95,11 @@
       position: relative;
       z-index: 2;
       max-width: 420px;
-      margin: 48px auto;
-      background: var(--bg-sheet);
+      margin: 36px auto;
+      background: var(--bg-panel);
       border: 2px solid var(--border-strong);
       border-radius: 8px;
-      padding: 28px;
+      padding: 26px;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
     }
 
@@ -128,7 +144,7 @@
 
     .auth-mode-badge {
       margin-top: 14px;
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       color: var(--ink-muted);
       text-align: center;
     }
@@ -144,7 +160,7 @@
       gap: 10px;
       align-items: center;
       justify-content: space-between;
-      color: #efe8d6;
+      color: var(--ink-on-sheet);
     }
 
     .app-toolbar__left {
@@ -152,12 +168,14 @@
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      min-width: 0;
     }
 
     .app-toolbar__title {
       font-size: 0.92rem;
       font-weight: 600;
       letter-spacing: 0.04em;
+      overflow-wrap: anywhere;
     }
 
     .sync-pill {
@@ -167,6 +185,7 @@
       background: #24221e;
       border: 1px solid #575248;
       color: #e6decb;
+      flex-shrink: 0;
     }
 
     .sync-pill.live {
@@ -188,7 +207,7 @@
 
     select.gm-select {
       background: #24221e;
-      color: #f6f1e4;
+      color: var(--ink-on-sheet);
       border: 1px solid #6b6457;
       border-radius: var(--radius);
       padding: 7px 10px;
@@ -199,7 +218,7 @@
 
     button {
       background: #24221e;
-      color: #f6f1e4;
+      color: var(--ink-on-sheet);
       border: 1px solid #575248;
       border-radius: var(--radius);
       padding: 7px 12px;
@@ -216,7 +235,7 @@
 
     button.primary {
       background: #1b1a18;
-      color: #f6f1e4;
+      color: var(--ink-on-sheet);
       border-color: #1b1a18;
       padding: 10px 14px;
       font-weight: 700;
@@ -263,9 +282,9 @@
     }
 
     .gm-roster-btn.active {
-      background: #f6f1e4;
-      color: #1b1a18;
-      border-color: #f6f1e4;
+      background: var(--bg-panel);
+      color: var(--ink-primary);
+      border-color: var(--bg-panel);
       font-weight: 700;
     }
 
@@ -276,7 +295,7 @@
       max-width: 980px;
       margin: 0 auto;
       background: var(--bg-sheet);
-      color: var(--ink-primary);
+      color: var(--ink-on-sheet);
       border: 2px solid var(--border-strong);
       border-radius: 8px;
       padding: 28px;
@@ -288,7 +307,7 @@
       grid-template-columns: 1fr auto;
       gap: 20px;
       align-items: center;
-      border-bottom: 2.5px solid var(--border-strong);
+      border-bottom: 2.5px solid rgba(246, 241, 228, 0.35);
       padding-bottom: 18px;
       margin-bottom: 22px;
     }
@@ -297,6 +316,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
+      min-width: 0;
     }
 
     .brand-custom-img {
@@ -315,15 +335,17 @@
     }
 
     .field-box {
-      background: var(--bg-panel);
+      background: var(--bg-input);
+      color: var(--ink-primary);
       border: 1.5px solid var(--border-strong);
       border-radius: var(--radius);
       padding: 8px 10px;
+      min-width: 0;
     }
 
     .field-box label {
       display: block;
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -353,19 +375,23 @@
       grid-template-columns: 1.1fr 1.3fr;
       gap: 22px;
       align-items: start;
+      min-width: 0;
     }
 
     .column {
       display: flex;
       flex-direction: column;
       gap: 18px;
+      min-width: 0;
     }
 
     .panel {
       background: var(--bg-panel);
+      color: var(--ink-primary);
       border: 1.5px solid var(--border-strong);
       border-radius: var(--radius);
       padding: 14px 16px;
+      min-width: 0;
     }
 
     .panel-title {
@@ -377,6 +403,7 @@
       text-transform: uppercase;
       border-bottom: 1.5px solid var(--border-strong);
       padding-bottom: 6px;
+      color: var(--ink-primary);
     }
 
     .skills-list {
@@ -387,7 +414,7 @@
 
     .skill-row {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 10px;
       padding: 4px 8px;
@@ -406,12 +433,15 @@
     .skill-name {
       font-size: 0.92rem;
       font-weight: 600;
+      color: var(--ink-primary);
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .skill-name input.inline-skill-input {
       width: 100%;
       border: none;
-      border-bottom: 1px dashed #8a8171;
+      border-bottom: 1px dashed #7a6c4f;
       background: transparent;
       font-size: 0.92rem;
       font-weight: 600;
@@ -424,16 +454,17 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      flex-shrink: 0;
     }
 
     .write-box {
-      width: 40px;
-      height: 24px;
+      width: 42px;
+      height: 26px;
       border: 1.75px solid var(--border-strong);
       border-radius: 3px;
-      background: #fffdf8;
+      background: var(--bg-input);
       color: var(--ink-primary);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 700;
       text-align: center;
       padding: 0 3px;
@@ -443,23 +474,24 @@
 
     .write-box:focus {
       border-color: #000000;
-      box-shadow: 0 0 0 2px rgba(27, 26, 24, 0.18);
+      box-shadow: 0 0 0 2px rgba(27, 26, 24, 0.2);
     }
 
     .btn-remove-skill {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       background: var(--bg-well);
       color: var(--ink-primary);
-      border: 1px solid #9e9482;
+      border: 1px solid #8c7b59;
       border-radius: 3px;
       font-size: 0.95rem;
       font-weight: 700;
       line-height: 1;
+      flex-shrink: 0;
     }
 
     .btn-remove-skill:hover {
@@ -474,11 +506,11 @@
       background: var(--bg-well);
       color: var(--ink-primary);
       font-weight: 600;
-      border: 1px dashed #6b6457;
+      border: 1px dashed #5e523a;
     }
 
     .extra-skill-add:hover {
-      background: #e4dac2;
+      background: #c7b488;
     }
 
     /* EKSTRA MODÜLÜ STİLLERİ */
@@ -496,6 +528,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      min-width: 0;
     }
 
     .ekstra-card.active-mod {
@@ -507,6 +540,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
     }
 
     .ekstra-checkbox {
@@ -520,9 +554,9 @@
     .ekstra-title-input {
       flex: 1;
       min-width: 0;
-      border: 1px solid #8a8171;
+      border: 1px solid #7a6c4f;
       border-radius: 3px;
-      background: #fffdf8;
+      background: var(--bg-input);
       padding: 4px 7px;
       font-size: 0.88rem;
       font-weight: 600;
@@ -539,6 +573,7 @@
       flex-direction: column;
       gap: 5px;
       padding-left: 24px;
+      min-width: 0;
     }
 
     .ekstra-effect-row {
@@ -547,82 +582,140 @@
       align-items: center;
       gap: 5px;
       background: var(--bg-panel);
-      border: 1px solid #b5ab96;
+      border: 1px solid #9e8c68;
       border-radius: 3px;
-      padding: 4px 6px;
+      padding: 5px 6px;
+      min-width: 0;
     }
 
     .ekstra-skill-select {
-      flex: 1;
-      min-width: 105px;
-      border: 1px solid #8a8171;
+      flex: 1 1 110px;
+      min-width: 0;
+      border: 1px solid #7a6c4f;
       border-radius: 3px;
-      background: #fffdf8;
+      background: var(--bg-input);
       color: var(--ink-primary);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      padding: 2px 4px;
+      padding: 3px 5px;
       outline: none;
     }
 
     .ekstra-sign-select {
-      border: 1px solid #8a8171;
+      border: 1px solid #7a6c4f;
       border-radius: 3px;
-      background: #fffdf8;
+      background: var(--bg-input);
       color: var(--ink-primary);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       font-weight: 800;
-      padding: 2px 5px;
+      padding: 3px 6px;
       outline: none;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .ekstra-amount-input {
-      width: 44px;
-      border: 1px solid #8a8171;
+      width: 48px;
+      border: 1px solid #7a6c4f;
       border-radius: 3px;
-      background: #fffdf8;
+      background: var(--bg-input);
       color: var(--ink-primary);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       font-weight: 700;
       text-align: center;
-      padding: 2px 3px;
+      padding: 3px 4px;
       outline: none;
+      flex-shrink: 0;
     }
 
     .ekstra-add-effect-btn {
       align-self: flex-start;
       margin-left: 24px;
-      padding: 3px 8px;
-      font-size: 0.76rem;
+      padding: 4px 9px;
+      font-size: 0.78rem;
       background: var(--bg-panel);
       color: var(--ink-primary);
       font-weight: 600;
-      border: 1px solid #8a8171;
+      border: 1px solid #7a6c4f;
     }
 
     .ekstra-add-effect-btn:hover {
-      background: #e4dac2;
+      background: #c7b488;
     }
 
     .plugin-slot {
-      border: 1.5px dashed #8a8171;
+      border: 1.5px dashed #7a6c4f;
       background: var(--bg-well);
       border-radius: var(--radius);
       padding: 12px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--ink-muted);
     }
 
+    /* MOBİL / IPHONE UYUMLULUĞU */
     @media (max-width: 820px) {
+      .sheet {
+        padding: 16px 12px;
+      }
       .sheet-header {
         grid-template-columns: 1fr;
+        gap: 14px;
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+      }
+      .brand-custom-img {
+        max-width: 100%;
+        max-height: 96px;
       }
       .meta-fields {
         grid-template-columns: 1fr;
       }
       .sheet-grid {
         grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .panel {
+        padding: 12px;
+      }
+      .skill-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 6px 4px;
+      }
+      .skill-name,
+      .skill-name input.inline-skill-input {
+        font-size: 16px;
+      }
+      .write-box {
+        width: 46px;
+        height: 32px;
+        font-size: 16px;
+      }
+      .field-box input[type="text"],
+      .field-box input[type="password"],
+      .field-box textarea,
+      .ekstra-title-input,
+      .ekstra-skill-select,
+      .ekstra-sign-select,
+      .ekstra-amount-input,
+      select.gm-select {
+        font-size: 16px;
+      }
+      .ekstra-checkbox {
+        width: 22px;
+        height: 22px;
+      }
+      .ekstra-effects-list,
+      .ekstra-add-effect-btn {
+        margin-left: 0;
+        padding-left: 0;
+      }
+      .app-toolbar__actions {
+        width: 100%;
+      }
+      .app-toolbar__actions button,
+      .app-toolbar__actions select {
+        flex: 1 1 auto;
       }
     }
 
@@ -716,7 +809,7 @@
       <div id="gm-roster-buttons"></div>
     </div>
 
-    <main class="sheet" id="character-sheet" data-app-version="0.5.2">
+    <main class="sheet" id="character-sheet" data-app-version="0.5.4">
       <header class="sheet-header">
         <div class="brand-block">
           <img src="./header-banner.png" alt="DIRIM ANOMALİ" class="brand-custom-img" />
@@ -880,15 +973,20 @@
         ? "Mod: Ortak Veritabanı + Canlı Senkronizasyon Aktif"
         : "Mod: Yerel Tarayıcı";
 
-      function sanitizeNumberString(raw) {
+      function sanitizeNumberString(raw, allowLeadingMinus = true) {
         const cleaned = String(raw ?? "").replace(/[^\d-]/g, "");
-        if (!cleaned || cleaned === "-") return "";
+        if (!cleaned) return "";
         const normalized = cleaned.replace(/(?!^)-/g, "");
-        return normalized === "-" ? "" : normalized;
+        if (normalized === "-") {
+          return allowLeadingMinus ? "-" : "";
+        }
+        return normalized;
       }
 
       function parseNum(val) {
-        const n = parseInt(String(val ?? "").trim(), 10);
+        const str = String(val ?? "").trim();
+        if (!str || str === "-") return 0;
+        const n = parseInt(str, 10);
         return Number.isNaN(n) ? 0 : n;
       }
 
@@ -931,13 +1029,13 @@
       function createNumericBox(boxId, ariaLabel, initialVal = "") {
         const input = document.createElement("input");
         input.type = "text";
-        input.inputMode = "numeric";
+        input.inputMode = "text";
         input.className = "write-box";
         input.id = boxId;
         input.setAttribute("aria-label", ariaLabel);
-        input.value = sanitizeNumberString(initialVal);
+        input.value = sanitizeNumberString(initialVal, true);
         input.addEventListener("input", () => {
-          const sanitized = sanitizeNumberString(input.value);
+          const sanitized = sanitizeNumberString(input.value, true);
           if (input.value !== sanitized) {
             input.value = sanitized;
           }
@@ -1047,7 +1145,7 @@
       function computeEkstraSignedDelta(effectRowEl) {
         const sign = effectRowEl.querySelector(".ekstra-sign-select")?.value === "-" ? -1 : 1;
         const amtInput = effectRowEl.querySelector(".ekstra-amount-input");
-        const cleanAmt = sanitizeNumberString(amtInput ? amtInput.value : "1");
+        const cleanAmt = sanitizeNumberString(amtInput ? amtInput.value : "1", false);
         const mag = Math.abs(parseNum(cleanAmt || "0"));
         return sign * mag;
       }
@@ -1108,7 +1206,7 @@
         amountInput.inputMode = "numeric";
         amountInput.className = "ekstra-amount-input";
         amountInput.setAttribute("aria-label", "Etki miktarı");
-        amountInput.value = sanitizeNumberString(effectObj.amount ?? "1") || "1";
+        amountInput.value = sanitizeNumberString(effectObj.amount ?? "1", false) || "1";
 
         const removeEffectBtn = document.createElement("button");
         removeEffectBtn.type = "button";
@@ -1117,7 +1215,7 @@
         removeEffectBtn.textContent = "×";
 
         function handleEffectChange() {
-          const clean = sanitizeNumberString(amountInput.value);
+          const clean = sanitizeNumberString(amountInput.value, true);
           if (amountInput.value !== clean) amountInput.value = clean;
           const checkbox = ekstraCardEl.querySelector(".ekstra-checkbox");
           if (checkbox && checkbox.checked) {
@@ -1259,7 +1357,7 @@
           card.querySelectorAll(".ekstra-effect-row").forEach((row) => {
             const targetBoxId = row.querySelector(".ekstra-skill-select")?.value || "";
             const sign = row.querySelector(".ekstra-sign-select")?.value === "-" ? "-" : "+";
-            const amount = sanitizeNumberString(row.querySelector(".ekstra-amount-input")?.value || "1") || "1";
+            const amount = sanitizeNumberString(row.querySelector(".ekstra-amount-input")?.value || "1", false) || "1";
             effects.push({ targetBoxId, sign, amount });
           });
           list.push({ id, name, active, effects });
@@ -1278,7 +1376,7 @@
           const arr = [];
           for (let i = 0; i < skill.boxes; i++) {
             const box = document.getElementById(`${skill.id}_box_${i}`);
-            arr.push(box ? sanitizeNumberString(box.value) : "");
+            arr.push(box ? sanitizeNumberString(box.value, false) : "");
           }
           skillValues[skill.id] = arr;
         });
@@ -1291,12 +1389,12 @@
           otherSkills.push({
             id,
             label: labelInput ? labelInput.value : "",
-            value: box ? sanitizeNumberString(box.value) : ""
+            value: box ? sanitizeNumberString(box.value, false) : ""
           });
         });
 
         return {
-          version: "0.5.2",
+          version: "0.5.4",
           owner: activeCharacterOwner,
           updatedBy: currentUser?.username || "unknown",
           updatedAt: new Date().toISOString(),
