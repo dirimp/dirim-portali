@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DIRIM — Karakter Kağıdı &amp; GM Paneli</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    if (!window.supabase) {
-      document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
-    }
-  </script>
   <style>
     :root {
       --bg-page: #121214;
@@ -39,7 +33,6 @@
       display: none !important;
     }
 
-    /* GİRİŞ EKRANI */
     .auth-wrapper {
       max-width: 420px;
       margin: 48px auto;
@@ -94,7 +87,6 @@
       text-align: center;
     }
 
-    /* ÜST ARAÇ ÇUBUĞU */
     .app-toolbar {
       max-width: 980px;
       margin: 0 auto 16px;
@@ -190,7 +182,6 @@
       border-color: #991b1b;
     }
 
-    /* GM HIZLI KART LİSTESİ */
     .gm-roster-bar {
       max-width: 980px;
       margin: 0 auto 16px;
@@ -226,7 +217,6 @@
       font-weight: 700;
     }
 
-    /* KARAKTER KAĞIDI */
     .sheet {
       max-width: 980px;
       margin: 0 auto;
@@ -545,7 +535,7 @@
       <div id="gm-roster-buttons"></div>
     </div>
 
-    <main class="sheet" id="character-sheet" data-app-version="0.4.2">
+    <main class="sheet" id="character-sheet" data-app-version="0.4.3">
       <header class="sheet-header">
         <div class="brand-block">
           <h1>DIRIM</h1>
@@ -623,7 +613,7 @@
     (function () {
       const SUPABASE_CONFIG = {
         url: "https://slrarvrqszfrousxpghd.supabase.co",
-        anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNscmFydnJxc3pmcm91c3hwZ2hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxOTE3NDcsImV4cCI6MjExMDc2Nzc0N30.xm0sYKBZZG21CCV03uAXrlRBxnNR5f8nzT2xRfPsoFw",
+        anonKey: "sb_publishable_R7rpMuONmMt9cTX1u1VG5g_WuSy8RQL",
         table: "dirim_characters"
       };
 
@@ -673,15 +663,12 @@
         { id: "diger_2", label: "", value: "" }
       ];
 
-      const hasCloud = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && window.supabase);
-      const supabaseClient = hasCloud
-        ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
-        : null;
+      const hasCloud = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 
       let currentUser = null;
       let activeCharacterOwner = null;
-      let realtimeChannel = null;
       let saveDebounceTimer = null;
+      let pollTimer = null;
       let isApplyingRemoteState = false;
 
       const authScreen = document.getElementById("auth-screen");
@@ -700,7 +687,16 @@
 
       authModeInfo.textContent = hasCloud
         ? "Mod: Ortak Veritabanı + Canlı Senkronizasyon Aktif"
-        : "Mod: Yerel Tarayıcı (Supabase bilgileri eklendiğinde canlı ortak veritabanına geçer)";
+        : "Mod: Yerel Tarayıcı";
+
+      function getRestHeaders() {
+        return {
+          apikey: SUPABASE_CONFIG.anonKey,
+          Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal"
+        };
+      }
 
       function setSyncStatus(text, type = "") {
         syncStatus.textContent = text;
@@ -821,7 +817,7 @@
         });
 
         return {
-          version: "0.4.2",
+          version: "0.4.3",
           owner: activeCharacterOwner,
           updatedBy: currentUser?.username || "unknown",
           updatedAt: new Date().toISOString(),
@@ -881,26 +877,46 @@
         }
       }
 
-      async function saveToCloud(owner, state) {
-        if (!supabaseClient || !owner) return;
-        setSyncStatus("Kaydediliyor...", "saving");
-        const { error } = await supabaseClient
-          .from(SUPABASE_CONFIG.table)
-          .upsert(
-            {
-              owner_username: owner,
-              data: state,
-              updated_by: currentUser?.username || owner,
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: "owner_username" }
-          );
+      async function fetchCloudRow(owner) {
+        const endpoint = `${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?owner_username=eq.${encodeURIComponent(owner)}&select=data,updated_by,updated_at`;
+        const res = await fetch(endpoint, {
+          method: "GET",
+          headers: getRestHeaders()
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        const rows = await res.json();
+        return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      }
 
-        if (error) {
-          console.error("Supabase kayıt hatası:", error);
-          setSyncStatus("Kayıt Hatası");
-        } else {
+      async function saveToCloud(owner, state) {
+        if (!hasCloud || !owner) return;
+        setSyncStatus("Kaydediliyor...", "saving");
+        try {
+          const endpoint = `${SUPABASE_CONFIG.url}/rest/v1/${SUPABASE_CONFIG.table}?on_conflict=owner_username`;
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: getRestHeaders(),
+            body: JSON.stringify([
+              {
+                owner_username: owner,
+                data: state,
+                updated_by: currentUser?.username || owner,
+                updated_at: new Date().toISOString()
+              }
+            ])
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errText}`);
+          }
           setSyncStatus("Canlı Senkron", "live");
+        } catch (err) {
+          console.error("Supabase kayıt hatası:", err);
+          setSyncStatus("Kayıt Hatası");
         }
       }
 
@@ -921,41 +937,31 @@
         }, 300);
       }
 
-      function subscribeRealtime() {
-        if (!supabaseClient) return;
-        if (realtimeChannel) {
-          supabaseClient.removeChannel(realtimeChannel);
-          realtimeChannel = null;
-        }
+      function startLivePolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        if (!hasCloud) return;
 
-        realtimeChannel = supabaseClient
-          .channel("dirim_characters_live")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: SUPABASE_CONFIG.table
-            },
-            (payload) => {
-              const row = payload.new;
-              if (!row || !row.owner_username) return;
-              saveLocal(row.owner_username, row.data);
+        pollTimer = setInterval(async () => {
+          if (!activeCharacterOwner || !currentUser) return;
+          const activeEl = document.activeElement;
+          const userTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+          if (userTyping) return;
 
-              if (
-                row.owner_username === activeCharacterOwner &&
-                row.updated_by !== currentUser?.username
-              ) {
-                applyState(row.data, row.owner_username);
+          try {
+            const row = await fetchCloudRow(activeCharacterOwner);
+            if (!row || !row.data) return;
+            const currentLocal = loadLocal(activeCharacterOwner);
+            if (!currentLocal || currentLocal.updatedAt !== row.data.updatedAt) {
+              if (row.updated_by !== currentUser.username) {
+                saveLocal(activeCharacterOwner, row.data);
+                applyState(row.data, activeCharacterOwner);
                 setSyncStatus("Canlı Güncellendi", "live");
               }
             }
-          )
-          .subscribe((status) => {
-            if (status === "SUBSCRIBED") {
-              setSyncStatus("Canlı Senkron", "live");
-            }
-          });
+          } catch {
+            // Sessizce bir sonraki turda tekrar dener
+          }
+        }, 2500);
       }
 
       async function loadCharacterSheet(owner) {
@@ -976,21 +982,18 @@
 
         if (hasCloud) {
           setSyncStatus("Yükleniyor...", "saving");
-          const { data, error } = await supabaseClient
-            .from(SUPABASE_CONFIG.table)
-            .select("data")
-            .eq("owner_username", owner)
-            .maybeSingle();
-
-          if (error) {
-            console.error("Supabase okuma hatası:", error);
-            setSyncStatus("Çevrimdışı / Yerel");
-          } else if (data && data.data) {
-            saveLocal(owner, data.data);
-            applyState(data.data, ownerLabel);
-            setSyncStatus("Canlı Senkron", "live");
-          } else {
-            await saveToCloud(owner, collectState());
+          try {
+            const row = await fetchCloudRow(owner);
+            if (row && row.data) {
+              saveLocal(owner, row.data);
+              applyState(row.data, ownerLabel);
+              setSyncStatus("Canlı Senkron", "live");
+            } else {
+              await saveToCloud(owner, collectState());
+            }
+          } catch (err) {
+            console.error("Supabase okuma hatası:", err);
+            setSyncStatus("Bağlantı Hatası");
           }
         } else {
           setSyncStatus("Yerel Mod");
@@ -1035,12 +1038,12 @@
           buildGmControls();
           gmSelect.classList.remove("hidden");
           gmRosterBar.classList.remove("hidden");
-          subscribeRealtime();
+          startLivePolling();
           await loadCharacterSheet(PLAYER_USERS[0].username);
         } else {
           gmSelect.classList.add("hidden");
           gmRosterBar.classList.add("hidden");
-          subscribeRealtime();
+          startLivePolling();
           await loadCharacterSheet(user.username);
         }
       }
@@ -1049,9 +1052,9 @@
         currentUser = null;
         activeCharacterOwner = null;
         sessionStorage.removeItem(SESSION_KEY);
-        if (realtimeChannel && supabaseClient) {
-          supabaseClient.removeChannel(realtimeChannel);
-          realtimeChannel = null;
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
         }
         appScreen.classList.add("hidden");
         authScreen.classList.remove("hidden");
