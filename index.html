@@ -298,7 +298,7 @@
 
     .sheet-grid {
       display: grid;
-      grid-template-columns: 1.05fr 1.35fr;
+      grid-template-columns: 1.1fr 1.3fr;
       gap: 22px;
       align-items: start;
     }
@@ -375,7 +375,7 @@
     }
 
     .write-box {
-      width: 34px;
+      width: 38px;
       height: 24px;
       border: 1.75px solid var(--border-strong);
       border-radius: 3px;
@@ -429,6 +429,129 @@
       background: #e4e4e7;
     }
 
+    /* EKSTRA MODÜLÜ STİLLERİ */
+    .ekstra-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ekstra-card {
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ekstra-card.active-mod {
+      background: #f0fdf4;
+      border-color: #15803d;
+    }
+
+    .ekstra-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ekstra-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #18181b;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .ekstra-title-input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #a1a1aa;
+      border-radius: 4px;
+      background: #ffffff;
+      padding: 4px 7px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+      outline: none;
+    }
+
+    .ekstra-title-input:focus {
+      border-color: #18181b;
+    }
+
+    .ekstra-effects-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-left: 24px;
+    }
+
+    .ekstra-effect-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid #d4d4d8;
+      border-radius: 4px;
+      padding: 4px 6px;
+    }
+
+    .ekstra-skill-select {
+      flex: 1;
+      min-width: 105px;
+      border: 1px solid #a1a1aa;
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 2px 4px;
+      outline: none;
+    }
+
+    .ekstra-sign-select {
+      border: 1px solid #a1a1aa;
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink-primary);
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 2px 5px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .ekstra-amount-input {
+      width: 44px;
+      border: 1px solid #a1a1aa;
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink-primary);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 2px 3px;
+      outline: none;
+    }
+
+    .ekstra-add-effect-btn {
+      align-self: flex-start;
+      margin-left: 24px;
+      padding: 3px 8px;
+      font-size: 0.76rem;
+      background: #e4e4e7;
+      color: #18181b;
+      border: 1px solid #a1a1aa;
+    }
+
+    .ekstra-add-effect-btn:hover {
+      background: #d4d4d8;
+    }
+
     .plugin-slot {
       border: 1.5px dashed #a1a1aa;
       background: #fafafa;
@@ -460,6 +583,7 @@
       .gm-roster-bar,
       .extra-skill-add,
       .btn-remove-skill,
+      .ekstra-add-effect-btn,
       .plugin-slot {
         display: none !important;
       }
@@ -535,7 +659,7 @@
       <div id="gm-roster-buttons"></div>
     </div>
 
-    <main class="sheet" id="character-sheet" data-app-version="0.4.3">
+    <main class="sheet" id="character-sheet" data-app-version="0.5.0">
       <header class="sheet-header">
         <div class="brand-block">
           <h1>DIRIM</h1>
@@ -555,7 +679,7 @@
       </header>
 
       <div class="sheet-grid">
-        <section class="column" aria-label="Yetenekler">
+        <section class="column" aria-label="Yetenekler ve Ekstralar">
           <div class="panel" id="panel-skills">
             <h2 class="panel-title">YETENEKLER</h2>
             <div class="skills-list" id="skills-container"></div>
@@ -565,6 +689,12 @@
             <h2 class="panel-title">DIĞER YETENEKLER</h2>
             <div class="skills-list" id="other-skills-container"></div>
             <button type="button" class="extra-skill-add" id="btn-add-other-skill">+ Yetenek Satırı Ekle</button>
+          </div>
+
+          <div class="panel" id="panel-ekstralar">
+            <h2 class="panel-title">EKSTRA</h2>
+            <div class="ekstra-list" id="ekstra-container"></div>
+            <button type="button" class="extra-skill-add" id="btn-add-ekstra">+ Ekstra Ekle</button>
           </div>
         </section>
 
@@ -632,7 +762,7 @@
       ];
 
       const PLAYER_USERS = USERS.filter((u) => u.role === "player");
-      const LOCAL_PREFIX = "dirim_sheet_v4_";
+      const LOCAL_PREFIX = "dirim_sheet_v5_";
       const SESSION_KEY = "dirim_active_session_v1";
 
       const DEFAULT_SKILLS = [
@@ -663,6 +793,8 @@
         { id: "diger_2", label: "", value: "" }
       ];
 
+      const DEFAULT_EKSTRALAR = [];
+
       const hasCloud = Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
 
       let currentUser = null;
@@ -670,6 +802,8 @@
       let saveDebounceTimer = null;
       let pollTimer = null;
       let isApplyingRemoteState = false;
+      // Her ekstra için aktifken uygulanan net delta kaydı: { [ekstraId]: { [boxId]: netDelta } }
+      let appliedEkstraDeltas = {};
 
       const authScreen = document.getElementById("auth-screen");
       const appScreen = document.getElementById("app-screen");
@@ -683,11 +817,25 @@
       const gmRosterButtons = document.getElementById("gm-roster-buttons");
       const skillsContainer = document.getElementById("skills-container");
       const otherSkillsContainer = document.getElementById("other-skills-container");
+      const ekstraContainer = document.getElementById("ekstra-container");
       const btnAddOtherSkill = document.getElementById("btn-add-other-skill");
+      const btnAddEkstra = document.getElementById("btn-add-ekstra");
 
       authModeInfo.textContent = hasCloud
         ? "Mod: Ortak Veritabanı + Canlı Senkronizasyon Aktif"
         : "Mod: Yerel Tarayıcı";
+
+      function sanitizeNumberString(raw) {
+        const cleaned = String(raw ?? "").replace(/[^\d-]/g, "");
+        if (!cleaned || cleaned === "-") return "";
+        const normalized = cleaned.replace(/(?!^)-/g, "");
+        return normalized === "-" ? "" : normalized;
+      }
+
+      function parseNum(val) {
+        const n = parseInt(String(val ?? "").trim(), 10);
+        return Number.isNaN(n) ? 0 : n;
+      }
 
       function getRestHeaders() {
         return {
@@ -703,23 +851,44 @@
         syncStatus.className = `sync-pill ${type}`.trim();
       }
 
-      function createWritableBoxes(prefixId, count, valuesArr = []) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "skill-boxes";
+      function getAllSelectableTargets() {
+        const targets = DEFAULT_SKILLS.map((s) => ({
+          boxId: `${s.id}_box_0`,
+          label: s.label
+        }));
 
-        for (let i = 0; i < count; i++) {
-          const boxId = `${prefixId}_box_${i}`;
-          const input = document.createElement("input");
-          input.type = "text";
-          input.className = "write-box";
-          input.id = boxId;
-          input.setAttribute("aria-label", `${prefixId} kutu ${i + 1}`);
-          input.value = valuesArr[i] ?? "";
-          input.addEventListener("input", scheduleSave);
-          wrapper.appendChild(input);
-        }
+        otherSkillsContainer.querySelectorAll("[data-other-skill-row]").forEach((row, idx) => {
+          const id = row.dataset.otherSkillRow;
+          const labelInput = row.querySelector(`[data-other-skill-label="${id}"]`);
+          const box = row.querySelector(".write-box");
+          if (box) {
+            const name = (labelInput && labelInput.value.trim()) || `Diğer Yetenek ${idx + 1}`;
+            targets.push({
+              boxId: box.id,
+              label: name
+            });
+          }
+        });
 
-        return wrapper;
+        return targets;
+      }
+
+      function createNumericBox(boxId, ariaLabel, initialVal = "") {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.inputMode = "numeric";
+        input.className = "write-box";
+        input.id = boxId;
+        input.setAttribute("aria-label", ariaLabel);
+        input.value = sanitizeNumberString(initialVal);
+        input.addEventListener("input", () => {
+          const sanitized = sanitizeNumberString(input.value);
+          if (input.value !== sanitized) {
+            input.value = sanitized;
+          }
+          scheduleSave();
+        });
+        return input;
       }
 
       function renderFixedSkills(savedValues = {}) {
@@ -732,10 +901,17 @@
           nameSpan.className = "skill-name";
           nameSpan.textContent = skill.label;
 
-          const boxes = createWritableBoxes(skill.id, skill.boxes, savedValues[skill.id] || []);
+          const wrapper = document.createElement("div");
+          wrapper.className = "skill-boxes";
+          const valuesArr = savedValues[skill.id] || [];
+          for (let i = 0; i < skill.boxes; i++) {
+            wrapper.appendChild(
+              createNumericBox(`${skill.id}_box_${i}`, `${skill.label} kutu ${i + 1}`, valuesArr[i] ?? "")
+            );
+          }
 
           row.appendChild(nameSpan);
-          row.appendChild(boxes);
+          row.appendChild(wrapper);
           skillsContainer.appendChild(row);
         });
       }
@@ -764,11 +940,16 @@
           input.placeholder = "Diğer yetenek adı...";
           input.value = item.label || "";
           input.dataset.otherSkillLabel = id;
-          input.addEventListener("input", scheduleSave);
+          input.addEventListener("input", () => {
+            refreshEkstraTargetLabels();
+            scheduleSave();
+          });
 
           nameWrap.appendChild(input);
 
-          const actionsWrap = createWritableBoxes(id, 1, [singleValue]);
+          const actionsWrap = document.createElement("div");
+          actionsWrap.className = "skill-boxes";
+          actionsWrap.appendChild(createNumericBox(`${id}_box_0`, `${id} değer kutusu`, singleValue));
 
           const removeBtn = document.createElement("button");
           removeBtn.type = "button";
@@ -778,6 +959,7 @@
           removeBtn.textContent = "×";
           removeBtn.addEventListener("click", () => {
             row.remove();
+            refreshEkstraTargetLabels();
             scheduleSave();
           });
 
@@ -786,6 +968,250 @@
           row.appendChild(actionsWrap);
           otherSkillsContainer.appendChild(row);
         });
+      }
+
+      function populateSkillSelect(selectEl, selectedBoxId) {
+        const targets = getAllSelectableTargets();
+        selectEl.innerHTML = "";
+        targets.forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t.boxId;
+          opt.textContent = t.label;
+          if (t.boxId === selectedBoxId) opt.selected = true;
+          selectEl.appendChild(opt);
+        });
+      }
+
+      function refreshEkstraTargetLabels() {
+        ekstraContainer.querySelectorAll(".ekstra-skill-select").forEach((sel) => {
+          const currentVal = sel.value;
+          populateSkillSelect(sel, currentVal);
+        });
+      }
+
+      function computeEkstraSignedDelta(effectRowEl) {
+        const sign = effectRowEl.querySelector(".ekstra-sign-select")?.value === "-" ? -1 : 1;
+        const amtInput = effectRowEl.querySelector(".ekstra-amount-input");
+        const cleanAmt = sanitizeNumberString(amtInput ? amtInput.value : "1");
+        const mag = Math.abs(parseNum(cleanAmt || "0"));
+        return sign * mag;
+      }
+
+      function applyEkstraDeltaToBoxes(ekstraId, isChecked, effectRows) {
+        // Önce bu ekstranın daha önce uyguladığı delta varsa geri al
+        const prevMap = appliedEkstraDeltas[ekstraId];
+        if (prevMap) {
+          Object.entries(prevMap).forEach(([boxId, prevDelta]) => {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            const currentVal = parseNum(box.value);
+            const reverted = currentVal - prevDelta;
+            box.value = String(reverted);
+          });
+          delete appliedEkstraDeltas[ekstraId];
+        }
+
+        // Tik aktifse yeni etkiyi kutulara uygula ve kaydet
+        if (isChecked) {
+          const newMap = {};
+          effectRows.forEach((rowEl) => {
+            const boxId = rowEl.querySelector(".ekstra-skill-select")?.value;
+            if (!boxId) return;
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            const delta = computeEkstraSignedDelta(rowEl);
+            const currentVal = parseNum(box.value);
+            box.value = String(currentVal + delta);
+            newMap[boxId] = (newMap[boxId] || 0) + delta;
+          });
+          appliedEkstraDeltas[ekstraId] = newMap;
+        }
+      }
+
+      function createEffectRow(effectObj = {}, ekstraCardEl, ekstraId) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "ekstra-effect-row";
+
+        const defaultTarget = DEFAULT_SKILLS[0].id + "_box_0";
+        const skillSelect = document.createElement("select");
+        skillSelect.className = "ekstra-skill-select";
+        populateSkillSelect(skillSelect, effectObj.targetBoxId || defaultTarget);
+
+        const signSelect = document.createElement("select");
+        signSelect.className = "ekstra-sign-select";
+        signSelect.setAttribute("aria-label", "Artı veya Eksi");
+        const optPlus = document.createElement("option");
+        optPlus.value = "+";
+        optPlus.textContent = "+";
+        const optMinus = document.createElement("option");
+        optMinus.value = "-";
+        optMinus.textContent = "-";
+        signSelect.appendChild(optPlus);
+        signSelect.appendChild(optMinus);
+        signSelect.value = effectObj.sign === "-" ? "-" : "+";
+
+        const amountInput = document.createElement("input");
+        amountInput.type = "text";
+        amountInput.inputMode = "numeric";
+        amountInput.className = "ekstra-amount-input";
+        amountInput.setAttribute("aria-label", "Etki miktarı");
+        amountInput.value = sanitizeNumberString(effectObj.amount ?? "1") || "1";
+
+        const removeEffectBtn = document.createElement("button");
+        removeEffectBtn.type = "button";
+        removeEffectBtn.className = "btn-remove-skill";
+        removeEffectBtn.title = "Yetenek etkisini kaldır";
+        removeEffectBtn.textContent = "×";
+
+        function handleEffectChange() {
+          const clean = sanitizeNumberString(amountInput.value);
+          if (amountInput.value !== clean) amountInput.value = clean;
+          const checkbox = ekstraCardEl.querySelector(".ekstra-checkbox");
+          if (checkbox && checkbox.checked) {
+            const allRows = Array.from(ekstraCardEl.querySelectorAll(".ekstra-effect-row"));
+            applyEkstraDeltaToBoxes(ekstraId, true, allRows);
+          }
+          scheduleSave();
+        }
+
+        skillSelect.addEventListener("change", handleEffectChange);
+        signSelect.addEventListener("change", handleEffectChange);
+        amountInput.addEventListener("input", handleEffectChange);
+
+        removeEffectBtn.addEventListener("click", () => {
+          const checkbox = ekstraCardEl.querySelector(".ekstra-checkbox");
+          if (checkbox && checkbox.checked) {
+            applyEkstraDeltaToBoxes(ekstraId, false, []);
+            rowEl.remove();
+            const remainingRows = Array.from(ekstraCardEl.querySelectorAll(".ekstra-effect-row"));
+            applyEkstraDeltaToBoxes(ekstraId, true, remainingRows);
+          } else {
+            rowEl.remove();
+          }
+          scheduleSave();
+        });
+
+        rowEl.appendChild(skillSelect);
+        rowEl.appendChild(signSelect);
+        rowEl.appendChild(amountInput);
+        rowEl.appendChild(removeEffectBtn);
+        return rowEl;
+      }
+
+      function renderEkstralar(items = DEFAULT_EKSTRALAR) {
+        ekstraContainer.innerHTML = "";
+        appliedEkstraDeltas = {};
+
+        items.forEach((item, idx) => {
+          const ekstraId = item.id || `ekstra_${idx + 1}`;
+          const card = document.createElement("div");
+          card.className = "ekstra-card";
+          card.dataset.ekstraId = ekstraId;
+
+          const topRow = document.createElement("div");
+          topRow.className = "ekstra-top-row";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "ekstra-checkbox";
+          checkbox.checked = Boolean(item.active);
+          card.classList.toggle("active-mod", checkbox.checked);
+
+          const titleInput = document.createElement("input");
+          titleInput.type = "text";
+          titleInput.className = "ekstra-title-input";
+          titleInput.placeholder = "Ekstra adı yaz...";
+          titleInput.value = item.name || "";
+          titleInput.addEventListener("input", scheduleSave);
+
+          const removeCardBtn = document.createElement("button");
+          removeCardBtn.type = "button";
+          removeCardBtn.className = "btn-remove-skill";
+          removeCardBtn.title = "Ekstrayı sil";
+          removeCardBtn.textContent = "×";
+
+          const effectsList = document.createElement("div");
+          effectsList.className = "ekstra-effects-list";
+
+          const effects = Array.isArray(item.effects) && item.effects.length > 0
+            ? item.effects
+            : [{ targetBoxId: DEFAULT_SKILLS[0].id + "_box_0", sign: "+", amount: "1" }];
+
+          effects.forEach((eff) => {
+            effectsList.appendChild(createEffectRow(eff, card, ekstraId));
+          });
+
+          const addEffectBtn = document.createElement("button");
+          addEffectBtn.type = "button";
+          addEffectBtn.className = "ekstra-add-effect-btn";
+          addEffectBtn.textContent = "+ Yetenek Etkisi (+ / -)";
+          addEffectBtn.addEventListener("click", () => {
+            const newRow = createEffectRow(
+              { targetBoxId: DEFAULT_SKILLS[0].id + "_box_0", sign: "+", amount: "1" },
+              card,
+              ekstraId
+            );
+            effectsList.appendChild(newRow);
+            if (checkbox.checked) {
+              const allRows = Array.from(effectsList.querySelectorAll(".ekstra-effect-row"));
+              applyEkstraDeltaToBoxes(ekstraId, true, allRows);
+            }
+            scheduleSave();
+          });
+
+          checkbox.addEventListener("change", () => {
+            card.classList.toggle("active-mod", checkbox.checked);
+            const allRows = Array.from(effectsList.querySelectorAll(".ekstra-effect-row"));
+            applyEkstraDeltaToBoxes(ekstraId, checkbox.checked, allRows);
+            scheduleSave();
+          });
+
+          removeCardBtn.addEventListener("click", () => {
+            if (checkbox.checked) {
+              applyEkstraDeltaToBoxes(ekstraId, false, []);
+            }
+            card.remove();
+            scheduleSave();
+          });
+
+          topRow.appendChild(checkbox);
+          topRow.appendChild(titleInput);
+          topRow.appendChild(removeCardBtn);
+
+          card.appendChild(topRow);
+          card.appendChild(effectsList);
+          card.appendChild(addEffectBtn);
+          ekstraContainer.appendChild(card);
+
+          if (checkbox.checked) {
+            const allRows = Array.from(effectsList.querySelectorAll(".ekstra-effect-row"));
+            const map = {};
+            allRows.forEach((r) => {
+              const bId = r.querySelector(".ekstra-skill-select")?.value;
+              if (!bId) return;
+              map[bId] = (map[bId] || 0) + computeEkstraSignedDelta(r);
+            });
+            appliedEkstraDeltas[ekstraId] = map;
+          }
+        });
+      }
+
+      function collectEkstralarState() {
+        const list = [];
+        ekstraContainer.querySelectorAll(".ekstra-card").forEach((card) => {
+          const id = card.dataset.ekstraId;
+          const active = Boolean(card.querySelector(".ekstra-checkbox")?.checked);
+          const name = card.querySelector(".ekstra-title-input")?.value || "";
+          const effects = [];
+          card.querySelectorAll(".ekstra-effect-row").forEach((row) => {
+            const targetBoxId = row.querySelector(".ekstra-skill-select")?.value || "";
+            const sign = row.querySelector(".ekstra-sign-select")?.value === "-" ? "-" : "+";
+            const amount = sanitizeNumberString(row.querySelector(".ekstra-amount-input")?.value || "1") || "1";
+            effects.push({ targetBoxId, sign, amount });
+          });
+          list.push({ id, name, active, effects });
+        });
+        return list;
       }
 
       function collectState() {
@@ -799,7 +1225,7 @@
           const arr = [];
           for (let i = 0; i < skill.boxes; i++) {
             const box = document.getElementById(`${skill.id}_box_${i}`);
-            arr.push(box ? box.value : "");
+            arr.push(box ? sanitizeNumberString(box.value) : "");
           }
           skillValues[skill.id] = arr;
         });
@@ -812,18 +1238,19 @@
           otherSkills.push({
             id,
             label: labelInput ? labelInput.value : "",
-            value: box ? box.value : ""
+            value: box ? sanitizeNumberString(box.value) : ""
           });
         });
 
         return {
-          version: "0.4.3",
+          version: "0.5.0",
           owner: activeCharacterOwner,
           updatedBy: currentUser?.username || "unknown",
           updatedAt: new Date().toISOString(),
           fields,
           skillValues,
-          otherSkills
+          otherSkills,
+          ekstralar: collectEkstralarState()
         };
       }
 
@@ -853,6 +1280,9 @@
           renderFixedSkills(state && state.skillValues ? state.skillValues : {});
           renderOtherSkills(
             state && Array.isArray(state.otherSkills) ? state.otherSkills : DEFAULT_OTHER_SKILLS
+          );
+          renderEkstralar(
+            state && Array.isArray(state.ekstralar) ? state.ekstralar : DEFAULT_EKSTRALAR
           );
         } finally {
           isApplyingRemoteState = false;
@@ -944,7 +1374,7 @@
         pollTimer = setInterval(async () => {
           if (!activeCharacterOwner || !currentUser) return;
           const activeEl = document.activeElement;
-          const userTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+          const userTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.tagName === "SELECT");
           if (userTyping) return;
 
           try {
@@ -1102,6 +1532,20 @@
           value: ""
         });
         renderOtherSkills(current);
+        refreshEkstraTargetLabels();
+        scheduleSave();
+      });
+
+      btnAddEkstra.addEventListener("click", () => {
+        const current = collectEkstralarState();
+        const nextIndex = current.length + 1;
+        current.push({
+          id: `ekstra_${nextIndex}_${Date.now()}`,
+          name: "",
+          active: false,
+          effects: [{ targetBoxId: DEFAULT_SKILLS[0].id + "_box_0", sign: "+", amount: "1" }]
+        });
+        renderEkstralar(current);
         scheduleSave();
       });
 
